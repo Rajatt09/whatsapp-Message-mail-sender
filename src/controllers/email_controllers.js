@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import hbs from "nodemailer-express-handlebars";
 import path from "path";
 import users from "../utils/users.js"; // Ensure this path is correct
+import Student from "../Models/userModel.js";
 
 // Create a transporter object using the default SMTP transport
 const transporter = nodemailer.createTransport({
@@ -25,26 +26,35 @@ transporter.use(
   })
 );
 
+
 const sendMail = async (res) => {
   try {
     for (const user of users) {
+      console.log({
+        name: user.name,
+        pref1: user.pref1,
+        pref2: user.pref2
+      });
       const mailOptions = {
         from: process.env.EMAIL_ID,
         to: user.email,
-        subject: "Test Email",
+        subject: " JIIT Optica Interview Details",
         template: "email",
         context: {
-          title: "Test Email",
+          title: "JIIT Optica Interview Details",
           message: "This is a test email",
           imageUrl: "cid:unique@nodemailer.com",
+          name: user.name,
+          pref1: user.pref1,
+          pref2: user.pref2,
         },
-        attachments: [
-          {
-            filename: "test.jpeg",
-            path: path.resolve("./src/images/test.jpeg"),
-            cid: "unique@nodemailer.com",
-          },
-        ],
+        // attachments: [
+        //   {
+        //     filename: "test.jpeg",
+        //     path: path.resolve("./src/images/test.jpeg"),
+        //     cid: "unique@nodemailer.com",
+        //   },
+        // ],
       };
 
       // Notify client that email sending is starting
@@ -54,6 +64,25 @@ const sendMail = async (res) => {
         await transporter.sendMail(mailOptions);
         // Notify client that email has been sent successfully
         res.write(`data: ${JSON.stringify({ email: user.email, emailSent: "yes" })}\n\n`);
+        // save the data in database
+        try {
+          const newStudent = new Student({
+            name: user.name,
+            email: user.email,
+            phoneNo: user.phoneNo,
+            pref1: user.pref1,
+            pref2: user.pref2,
+            emailSend: true,
+            whatsappSend: false,
+            emailSentAt: Date.now(),
+            whatsappSentAt: null
+          });
+          await newStudent.save();
+        }
+        catch (err) {
+
+          console.log(err)
+        }
       } catch (error) {
         // Notify client if there's an error sending the email
         res.write(`data: ${JSON.stringify({ email: user.email, emailSent: "no", error: error.message })}\n\n`);

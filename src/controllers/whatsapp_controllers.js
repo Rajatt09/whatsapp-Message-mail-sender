@@ -1,107 +1,118 @@
 import users from "../utils/users.js";
 import { sleep } from "../utils/sleep.js";
 import WhatsappWeb from "whatsapp-web.js";
+import student from '../Models/userModel.js';
+// implement the data saving in database
 
-const sendMessage = async (client) => {
+const sendMessage = async (client, res) => {
   console.log("Sending messages, opening WhatsApp...");
   try {
     for (const user of users) {
       if (!user || !user.phoneNo || !user.name) continue;
-      const phone = parseInt("91" + user.phoneNo);
+      const phone = parseInt("+91" + user.phoneNo);
       const name = user.name.toUpperCase().trim();
 
       const message =
-        "Hello *" +
+        "Hey *" +
         name +
         "*,\n\n" +
-        "This is a test message.\n\n- This is a bullet point\n\n_This is italics_\n\n*This is bold*";
+        "Your interview for the Optica JIIT Student Chapter is scheduled on *August 27th from 5 PM to 7 PM in G3 and G4* for both of your preferences. Your preferences are as follows:\n\n" +
+        `• Preference 1 : \n \t ${user.pref1}\n` +
+        `• Preference 2 : \n \t ${user.pref2}\n\n` +
+        "*Please be present at the venue 15 minutes before the scheduled time.*\n\n" +
+        "*Please bring your laptops or any relevant materials that showcase your work in the domain you're interested in.*\n\n" +
+        "In case of any queries, feel free to contact us.\n\n" +
+        "Rajat Bhati: 8595842343\n" +
+        "Yash Mittal: 8570940287\n\n" +
+        "Looking forward to seeing you there!\n\n" +
+        "Join our WhatsApp group for updates: https://chat.whatsapp.com/JlpgCzdvYWr5DnYb8nL7M2\n\n" +
+        "Regards,\n" +
+        "Optica JIIT Student Chapter";
+
+
+
+
 
       console.log("Sending message to :: ", phone);
+      res.write(`data: ${JSON.stringify({ name: user.name, phoneNo: user.phoneNo, email: user.email, messageSent: "sending" })}\n\n`);
       try {
         await client.sendMessage(`${phone}@c.us`, message);
-        console.log(`Message sent to ${phone}`);
+
+        res.write(`data: ${JSON.stringify({ phoneNo: user.phoneNo, messageSent: "yes" })}\n\n`);
+
       } catch (error) {
-        console.log(
-          `ERR [${phone}] :: `,
-          error.message,
-          "\n---------------------------------------------\n"
-        );
+        console.log(`ERR [${phone}] :: `, error.message);
+        res.write(`data: ${JSON.stringify({ phoneNo: user.phoneNo, messageSent: "no" })}\n\n`);
       }
+      // save the data in database
+      try {
+        const newStudent = new student({
+          name: user.name,
+          email: user.email,
+          phoneNo: user.phoneNo,
+          pref1: user.pref1,
+          pref2: user.pref2,
+          emailSend: false,
+          whatsappSend: true,
+          emailSentAt: null,
+          whatsappSentAt: Date.now()
+        });
+        await newStudent.save();
+      }
+      catch (err) {
+        console.log(err)
+      }
+
+
       console.log("Sleeping for 1 second");
       await sleep(1);
     }
   } catch (error) {
     console.log("Error sending message:", error.message);
+    res.write(`data: ${JSON.stringify({ message: "Error in sending messages", error: error.message })}\n\n`);
     throw error;
   } finally {
     console.log("All messages sent. Closing WhatsApp client.");
-    await client.destroy();
+    res.write('data: {"message": "All messages processed"}\n\n');
+    // await client.destroy();
   }
-  // after sending message how we close the whatsapp client
-  // await client.destroy();
-
-
 };
 
-const checkAuth = async () => {
-  return new Promise((resolve) => {
-    const client = new WhatsappWeb.Client({
-      authStrategy: new WhatsappWeb.LocalAuth(),
-      // i want to see the browser window
-      puppeteer: { headless: false },
-    });
+// const checkAuth = async () => {
+//   return new Promise((resolve) => {
+//     const client = new WhatsappWeb.Client({
+//       authStrategy: new WhatsappWeb.LocalAuth(),
+//       puppeteer: { headless: true }, // Show the browser window
+//     });
 
-    client.on('ready', async () => {
-      console.log("WhatsApp client authenticated.");
-      await client.destroy();
-      resolve(true);
-    });
+//     client.on('ready', async () => {
+//       console.log("WhatsApp client authenticated.");
+//       await client.destroy();
+//       resolve(true);
+//     });
 
-    // i want to check if the user is authenticated or not
-    // if not authenticated then i will return false
-    // if authenticated then i will return true
-    client.on('auth_failure', async (msg) => {
-      console.error("Authentication failure:", msg);
-      await client.destroy();
-      resolve(false);
-    });
+//     client.on('auth_failure', async (msg) => {
+//       console.error("Authentication failure:", msg);
+//       await client.destroy();
+//       resolve(false);
+//     });
 
-    // client.on('auth_failure', async (msg) => {
-    //   console.log("Authentication failure:", msg);
-    //   await client.destroy();
-    //   resolve(false);
-    // });
-    // client.on('auth_failure', async (msg) => {
-    //   console.error("Authentication failure:", msg);
-    //   await client.destroy();
-    //   resolve(false);
-    // });
+//     client.initialize();
+//   });
+// };
 
-    client.initialize();
-  });
-};
-
-
-
-
-
-
-
-const InitializeWhatsappClient = async () => {
+const InitializeWhatsappClient = async (res) => {
   try {
     console.log("Initializing WhatsApp client...");
-    const isAuthenticated = await checkAuth();
-    console.log("isAuthenticated :: ", isAuthenticated);
+    // const isAuthenticated = await checkAuth();
+    // console.log("isAuthenticated :: ", isAuthenticated);
     const client = new WhatsappWeb.Client({
       authStrategy: new WhatsappWeb.LocalAuth(),
-      puppeteer: {
-        headless: isAuthenticated, // Set to true if you don't need to see the browser window
-      },
+      puppeteer: { headless: false }, // Set to true if authenticated
       webVersion: "2.2409.2",
       webVersionCache: {
         type: "remote",
-        remotePath:
-          "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2409.2.html",
+        remotePath: "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2409.2.html",
       },
     });
 
@@ -112,19 +123,21 @@ const InitializeWhatsappClient = async () => {
 
     client.on("ready", async () => {
       console.log("WhatsApp client is ready. Starting to send messages...");
-      await sendMessage(client);
-      // print the message
-
-      process.exit(0);
+      await sendMessage(client, res);
+      // plz don;t make whole api clos i want this route of api close
+      res.end();
+      // process.exit(0);
     });
 
     await client.initialize();
+
+    // i want not to disclose the whatsapp web screen
+
+
   } catch (error) {
     console.log("Error initializing WhatsApp client:", error.message);
     throw error;
-
   }
-
 };
 
 export default InitializeWhatsappClient;

@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import connectDB from './utils/dbConnection.js'
 
 const app = express();
 
@@ -13,8 +14,12 @@ app.use(express.urlencoded({ extended: true, limit: "50kb" }));
 app.use(express.static("public"));
 
 app.use(cookieParser());
+// mongo db connection
+
+connectDB();
 
 //routes import
+
 
 import messageRouter from "./routes/message_routes.js";
 
