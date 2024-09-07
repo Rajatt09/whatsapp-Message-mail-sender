@@ -26,14 +26,13 @@ transporter.use(
   })
 );
 
-
 const sendMail = async (res) => {
   try {
     for (const user of users) {
       console.log({
         name: user.name,
         pref1: user.pref1,
-        pref2: user.pref2
+        pref2: user.pref2,
       });
       const mailOptions = {
         from: process.env.EMAIL_ID,
@@ -58,12 +57,21 @@ const sendMail = async (res) => {
       };
 
       // Notify client that email sending is starting
-      res.write(`data: ${JSON.stringify({ name: user.name, email: user.email, phoneNo: user.phoneNo, emailSent: "sending" })}\n\n`);
+      res.write(
+        `data: ${JSON.stringify({
+          name: user.name,
+          email: user.email,
+          phoneNo: user.phoneNo,
+          emailSent: "sending",
+        })}\n\n`
+      );
 
       try {
         await transporter.sendMail(mailOptions);
         // Notify client that email has been sent successfully
-        res.write(`data: ${JSON.stringify({ email: user.email, emailSent: "yes" })}\n\n`);
+        res.write(
+          `data: ${JSON.stringify({ email: user.email, emailSent: "yes" })}\n\n`
+        );
         // save the data in database
         try {
           const newStudent = new Student({
@@ -75,25 +83,34 @@ const sendMail = async (res) => {
             emailSend: true,
             whatsappSend: false,
             emailSentAt: Date.now(),
-            whatsappSentAt: null
+            whatsappSentAt: null,
           });
           await newStudent.save();
-        }
-        catch (err) {
-
-          console.log(err)
+        } catch (err) {
+          console.log(err);
         }
       } catch (error) {
         // Notify client if there's an error sending the email
-        res.write(`data: ${JSON.stringify({ email: user.email, emailSent: "no", error: error.message })}\n\n`);
+        res.write(
+          `data: ${JSON.stringify({
+            email: user.email,
+            emailSent: "no",
+            error: error.message,
+          })}\n\n`
+        );
       }
     }
 
     // Notify client that all emails have been processed
-    res.write('data: {"message": "All mails processed"}\n\n');
+    res.write('data: {"message": "All mails send."}\n\n');
   } catch (error) {
     // Notify client if there's a general error
-    res.write(`data: ${JSON.stringify({ message: "Error in sending mails", error: error.message })}\n\n`);
+    res.write(
+      `data: ${JSON.stringify({
+        message: "Error in sending mails.",
+        error: error.message,
+      })}\n\n`
+    );
   } finally {
     res.end(); // End the response
     transporter.close(); // Close the transporter after all operations

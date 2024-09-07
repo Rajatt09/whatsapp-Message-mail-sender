@@ -1,8 +1,7 @@
 import users from "../utils/users.js";
 import { sleep } from "../utils/sleep.js";
 import WhatsappWeb from "whatsapp-web.js";
-import student from '../Models/userModel.js';
-// implement the data saving in database
+import student from "../Models/userModel.js";
 
 const sendMessage = async (client, res) => {
   console.log("Sending messages, opening WhatsApp...");
@@ -16,7 +15,7 @@ const sendMessage = async (client, res) => {
         "Hey *" +
         name +
         "*,\n\n" +
-        "Your interview for the Optica JIIT Student Chapter is scheduled on *August 27th from 5 PM to 7 PM in G3 and G4* for both of your preferences. Your preferences are as follows:\n\n" +
+        "Your interview for the Optica JIIT Student Chapter is scheduled on *August 28th from 5 PM to 7 PM in G3 and G4* for both of your preferences. Your preferences are as follows:\n\n" +
         `• Preference 1 : \n \t ${user.pref1}\n` +
         `• Preference 2 : \n \t ${user.pref2}\n\n` +
         "*Please be present at the venue 15 minutes before the scheduled time.*\n\n" +
@@ -29,20 +28,32 @@ const sendMessage = async (client, res) => {
         "Regards,\n" +
         "Optica JIIT Student Chapter";
 
-
-
-
-
       console.log("Sending message to :: ", phone);
-      res.write(`data: ${JSON.stringify({ name: user.name, phoneNo: user.phoneNo, email: user.email, messageSent: "sending" })}\n\n`);
+      res.write(
+        `data: ${JSON.stringify({
+          name: user.name,
+          phoneNo: user.phoneNo,
+          email: user.email,
+          messageSent: "sending",
+        })}\n\n`
+      );
       try {
         await client.sendMessage(`${phone}@c.us`, message);
 
-        res.write(`data: ${JSON.stringify({ phoneNo: user.phoneNo, messageSent: "yes" })}\n\n`);
-
+        res.write(
+          `data: ${JSON.stringify({
+            phoneNo: user.phoneNo,
+            messageSent: "yes",
+          })}\n\n`
+        );
       } catch (error) {
         console.log(`ERR [${phone}] :: `, error.message);
-        res.write(`data: ${JSON.stringify({ phoneNo: user.phoneNo, messageSent: "no" })}\n\n`);
+        res.write(
+          `data: ${JSON.stringify({
+            phoneNo: user.phoneNo,
+            messageSent: "no",
+          })}\n\n`
+        );
       }
       // save the data in database
       try {
@@ -55,25 +66,28 @@ const sendMessage = async (client, res) => {
           emailSend: false,
           whatsappSend: true,
           emailSentAt: null,
-          whatsappSentAt: Date.now()
+          whatsappSentAt: Date.now(),
         });
         await newStudent.save();
+      } catch (err) {
+        console.log(err);
       }
-      catch (err) {
-        console.log(err)
-      }
-
 
       console.log("Sleeping for 1 second");
       await sleep(1);
     }
   } catch (error) {
     console.log("Error sending message:", error.message);
-    res.write(`data: ${JSON.stringify({ message: "Error in sending messages", error: error.message })}\n\n`);
+    res.write(
+      `data: ${JSON.stringify({
+        message: "Error in sending whatsapp messages.",
+        error: error.message,
+      })}\n\n`
+    );
     throw error;
   } finally {
     console.log("All messages sent. Closing WhatsApp client.");
-    res.write('data: {"message": "All messages processed"}\n\n');
+    res.write('data: {"message": "All messages processed."}\n\n');
     // await client.destroy();
   }
 };
@@ -112,7 +126,8 @@ const InitializeWhatsappClient = async (res) => {
       webVersion: "2.2409.2",
       webVersionCache: {
         type: "remote",
-        remotePath: "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2409.2.html",
+        remotePath:
+          "https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2409.2.html",
       },
     });
 
@@ -132,8 +147,6 @@ const InitializeWhatsappClient = async (res) => {
     await client.initialize();
 
     // i want not to disclose the whatsapp web screen
-
-
   } catch (error) {
     console.log("Error initializing WhatsApp client:", error.message);
     throw error;
