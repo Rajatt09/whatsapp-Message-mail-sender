@@ -1,6 +1,8 @@
 import { Router } from "express";
 import InitializeWhatsappClient from "../controllers/whatsapp_controllers.js";
 import sendMail from "../controllers/email_controllers.js";
+import { getMailsMessagesHistory } from "../controllers/data_controllers.js";
+import { setWhatsappMessage } from "../controllers/whatsapp_controllers.js";
 
 const router = Router();
 
@@ -55,7 +57,7 @@ router.get("/sendMesage/via-both", async (req, res) => {
     // await Promise.all([
     //     InitializeWhatsappClient(res),
     //     sendMail(res)
-    // ]);/
+    // ]);
 
     // Initialize WhatsApp client
     await InitializeWhatsappClient(res);
@@ -79,6 +81,12 @@ router.get("/sendMesage/via-both", async (req, res) => {
   } finally {
     res.end(); // End the SSE stream
   }
+});
+
+router.post("/sendMessage/whatsappData", setWhatsappMessage);
+
+router.get("/get-mails-messages/history", (req, res) => {
+  getMailsMessagesHistory(req, res);
 });
 
 export default router;

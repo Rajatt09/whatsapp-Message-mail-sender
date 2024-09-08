@@ -20,10 +20,12 @@ connectDB();
 
 import messageRouter from "./routes/message_routes.js";
 import fileRouter from "./routes/files_routes.js";
+import userRouter from "./routes/user_routes.js";
 
 //routes declaration
 
 app.use("/api/v1/message", messageRouter);
 app.use("/api/v1/files", fileRouter);
+app.use("/api/v1/users", userRouter);
 
 export { app };

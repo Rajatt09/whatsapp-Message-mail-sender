@@ -153,4 +153,7 @@ const InitializeWhatsappClient = async (res) => {
   }
 };
 
+const setWhatsappMessage = async (req, res) => {};
+
 export default InitializeWhatsappClient;
+export { setWhatsappMessage };
