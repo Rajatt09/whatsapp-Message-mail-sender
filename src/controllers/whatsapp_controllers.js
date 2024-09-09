@@ -3,6 +3,19 @@ import { sleep } from "../utils/sleep.js";
 import WhatsappWeb from "whatsapp-web.js";
 import student from "../Models/userModel.js";
 
+let whatsappmsg = "";
+
+const replaceWhatsappPlaceholders = (template, user) => {
+  return template.replace(/{(\w+)}/g, (match, p1) => {
+    // Check if user object has the property p1
+    if (user.hasOwnProperty(p1)) {
+      return user[p1]; // Replace with the user's property value
+    } else {
+      return match; // If property doesn't exist, return the original placeholder
+    }
+  });
+};
+
 const sendMessage = async (client, res) => {
   console.log("Sending messages, opening WhatsApp...");
   try {
@@ -11,22 +24,7 @@ const sendMessage = async (client, res) => {
       const phone = parseInt("+91" + user.phoneNo);
       const name = user.name.toUpperCase().trim();
 
-      const message =
-        "Hey *" +
-        name +
-        "*,\n\n" +
-        "Your interview for the Optica JIIT Student Chapter is scheduled on *August 28th from 5 PM to 7 PM in G3 and G4* for both of your preferences. Your preferences are as follows:\n\n" +
-        `• Preference 1 : \n \t ${user.pref1}\n` +
-        `• Preference 2 : \n \t ${user.pref2}\n\n` +
-        "*Please be present at the venue 15 minutes before the scheduled time.*\n\n" +
-        "*Please bring your laptops or any relevant materials that showcase your work in the domain you're interested in.*\n\n" +
-        "In case of any queries, feel free to contact us.\n\n" +
-        "Rajat Bhati: 8595842343\n" +
-        "Yash Mittal: 8570940287\n\n" +
-        "Looking forward to seeing you there!\n\n" +
-        "Join our WhatsApp group for updates: https://chat.whatsapp.com/JlpgCzdvYWr5DnYb8nL7M2\n\n" +
-        "Regards,\n" +
-        "Optica JIIT Student Chapter";
+      const message = replaceWhatsappPlaceholders(whatsappmsg, user);
 
       console.log("Sending message to :: ", phone);
       res.write(
@@ -153,7 +151,21 @@ const InitializeWhatsappClient = async (res) => {
   }
 };
 
-const setWhatsappMessage = async (req, res) => {};
+const setWhatsappMessage = async (req, res) => {
+  const { eventdetail, whatsappMessage } = req.body;
+  console.log("event detail and msg is:", eventdetail, whatsappMessage);
+  whatsappmsg = whatsappMessage;
+  try {
+    res.status(200).json({
+      message: "whatsapp data send succesfully.",
+    });
+  } catch (err) {
+    console.error("Error while receiving whatsapp data: ", err);
+    res.status(500).json({
+      message: "Internal server error while receiving whatsapp data.",
+    });
+  }
+};
 
 export default InitializeWhatsappClient;
 export { setWhatsappMessage };
