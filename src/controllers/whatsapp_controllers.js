@@ -4,6 +4,7 @@ import WhatsappWeb from "whatsapp-web.js";
 import student from "../Models/userModel.js";
 
 let whatsappmsg = "";
+let eventdetails = {};
 
 const replaceWhatsappPlaceholders = (template, user) => {
   return template.replace(/{(\w+)}/g, (match, p1) => {
@@ -55,16 +56,17 @@ const sendMessage = async (client, res) => {
       }
       // save the data in database
       try {
+        console.log("event data is: ", eventdetails);
         const newStudent = new student({
           name: user.name,
-          email: user.email,
+          email: user.email || "not available",
           phoneNo: user.phoneNo,
-          pref1: user.pref1,
-          pref2: user.pref2,
           emailSend: false,
           whatsappSend: true,
           emailSentAt: null,
           whatsappSentAt: Date.now(),
+          eventName: eventdetails.eventname,
+          eventDate: eventdetails.eventdate,
         });
         await newStudent.save();
       } catch (err) {
@@ -155,6 +157,7 @@ const setWhatsappMessage = async (req, res) => {
   const { eventdetail, whatsappMessage } = req.body;
   console.log("event detail and msg is:", eventdetail, whatsappMessage);
   whatsappmsg = whatsappMessage;
+  eventdetails = eventdetail;
   try {
     res.status(200).json({
       message: "whatsapp data send succesfully.",
